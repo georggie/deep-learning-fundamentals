@@ -153,10 +153,110 @@ To explain the intuition behind gradient descent we will start with the function
 
 When we calculate the gradient we get:
 
-<img src="https://render.githubusercontent.com/render/math?math=C(x,y) = [2x, 2y]]">
+<img src="https://render.githubusercontent.com/render/math?math=C(x,y) = [2x, 2y]">
 
 What does the gradient tell us? When we are at the point (x,y) it explains in which **DIRECTION (not value)** (2x, 2y) we need to go in order to maximize the impact on the function C(x, y). Hence, when we take the negative gradient we are going in a direction to minimize the loss/cost function.
 
 How does this translate to our neural network? Well, our cost function <img src="https://render.githubusercontent.com/render/math?math=C(\vec{w}^{\,},\vec{b}^{\,})"> has a lot of parameters but in the end, it's just a multivariable function. We can randomly choose <img src="https://render.githubusercontent.com/render/math?math=$\vec{w}^{\,}$"> and <img src="https://render.githubusercontent.com/render/math?math=$\vec{b}^{\,}$"> and calculate the gradient at that point of a cost function. The gradient will tell us in which direction we should go in order to reduce the value of a cost function. In order to go downhill, we will need some learning step that will represent how fast we want to go downhill. If steps are small, then learning process will be slow. If steps are high, then we might never find a minimum.
 
 The gradient is actually averaged over all training examples. This means that we calculate gradient for one training example <img src="https://render.githubusercontent.com/render/math?math=$\vec{x_1}^{\,}$"> and note what changes of <img src="https://render.githubusercontent.com/render/math?math=$\vec{w}^{\,}$"> and <img src="https://render.githubusercontent.com/render/math?math=$\vec{b}^{\,}$"> should be in order to improve the cost function for this example. We need to do this for every training example and find the average value of individual changes in order to make a new step in the cost function. This process is costly. So, we are going to use **stochastic gradient descent** that will take batches of input training data and make gradient descent based on those batches (we are essentially making an approximation of a true gradient using this batch approach). Of course, the estimate won't be perfect - there will be statistical fluctuations - but it doesn't need to be perfect: all we really care about is moving in a general direction that will help decrease C, and that means we don't need an exact computation of the gradient. In practice, stochastic gradient descent is a commonly used and powerful technique for learning in neural networks.
+
+## V - Backpropagation Algorithm
+
+As we saw in the previous section, in order for a neural network to learn we need to calculate the gradients of the loss function and to average them on all training data. That's the essence of the learning algorithm. **Backpropagation** is an algorithm for computing gradients of a cost function. Gradient tells us in which direction we need to go (from the current position) in order to make the steepest descent in a cost function. The goal of the neural network is to reduce cost function to the minimum. In order to explain how backpropagation algorithm works we need to introduce some notation:
+
+- w<sup>l</sup><sub>j,k</sub> denotes the weight for the connection from the k<sup>th</sup> neuron in the (l−1)<sup>th</sup> layer to the j<sup>th</sup> neuron in the l<sup>th</sup> layer.
+
+- a<sup>l</sup><sub>j</sub> denotes activation of the j<sup>th</sup> neuron in the l<sup>th</sup> layer.
+
+- b<sup>l</sup><sub>j</sub> denotes bias of the j<sup>th</sup> neuron in the l<sup>th</sup> layer.
+
+ w<sup>l</sup><sub>j,k</sub> example |  a<sup>l</sup><sub>j</sub>, b<sup>l</sup><sub>j</sub> example
+:-------------------------:|:-------------------------:
+![backpropagation-1](images/backpropagation-1.PNG)  |  ![backpropagation-2](images/backpropagation-2.PNG)
+
+With these notations, the activation a<sup>l</sup><sub>j</sub> of the j-th neuron in the l-th layer is related to the activations in the (l−1)th layer by the equation:
+
+
+<img src="https://render.githubusercontent.com/render/math?math=a_{j}^{l}%20=%20\sigma(\sum_k{w_{j,k}^{l}%20*%20a_{k}^{l-1}}%20%2B%20b_{j}^{l})">
+
+We define a weight matrix w<sup>l</sup> for each layer, l. The entries of the weight matrix w<sup>l</sup> are just the weights connecting to the l-th layer of neurons, that is, the entry in the j-th row and k-th column is w<sup>l</sup><sub>j,k</sub>. Similarly, for each layer l we define a bias vector, b<sup>l</sup> whose components are b<sup>l</sup><sub>j</sub>. And finally, we define an activation vector a<sup>l</sup> whose components are the activations a<sup>l</sup><sub>j</sub>. Having this in place, we can rewrite previous equation for activations in the l-th layer as:
+
+<img src="https://render.githubusercontent.com/render/math?math=a^{l}%20=%20\sigma(w^{l}%20*%20a^{l-1}%20%2B%20b^{l})">
+
+<img src="https://render.githubusercontent.com/render/math?math=a^{l}%20=%20\sigma(z^l)">
+
+Let's assume that cost function is defined as:
+
+<img src="https://render.githubusercontent.com/render/math?math=C(w,b)%20=%20\frac{1}{2n}\sum_x{||%20y(x)%20-%20a^L(x,w,b)%20||^2}">
+
+In this equation w and b denote weights and biases in the network, x is an input to the network, y is the desired output of the network when x is input and a<sup>L</sup>(x) is the current output of the network when x is input.
+
+Now that we have cleared the notation part, we can start explaining how backpropagation works. So, in the first step, we need to do a forward pass - which is to calculate the output of the neural network. We will assume that weights and biases in the network are assigned randomly at the begining:
+
+**Feedforward**: For each layer l = 2, ..., L
+
+<img src="https://render.githubusercontent.com/render/math?math=a^{l}%20=%20\sigma(w^{l}%20*%20a^{l-1}%20%2B%20b^{l})"> => <img src="https://render.githubusercontent.com/render/math?math=a^{l}%20=%20\sigma(z^l)">
+
+In the output, we get a<sup>L</sup>(x) which we use to compare to "ideal" (desired) output y(x) and we plug the difference into the cost function to calculate the loss. So, our position in the cost function is described by the current weights w and biases b. The goal is to find in which direction from that position to go in order to reduce the value of the cost function (which essentially means to get closer to the desired output). In order to find that direction, we need to calculate gradient: partial derivatives with respect to all weights and biases in the network. This is the essence of learning in neural networks.
+
+**BACKPROPAGATION REASONING**:
+
+**Step 1**: Let's first look at the last layer of the network (denoted as L) and see how much is cost function sensitive to the change in the value of z<sub>j</sub><sup>L</sup> (j<sup>th</sup> neuron in the last layer L):
+
+<img src="https://render.githubusercontent.com/render/math?math=\delta_{j}^{L}%20=%20\frac{\partial%20C(w,b)}{\partial%20z_{j}{L}}">
+
+a<sub>j</sub><sup>L</sup> is dependent on z<sub>j</sub><sup>L</sup> through the sigmoid function and furthermore cost function is dependent on a<sub>j</sub><sup>L</sup> (see equation). Using chaine rule of derivation we get (change in z<sub>j</sub><sup>L</sup> sparks change in a<sub>j</sub><sup>L</sup> which further propagates change in the loss/cost function):
+
+<img src="https://render.githubusercontent.com/render/math?math=\delta_{j}^{L}%20=%20\frac{\partial%20C(w,b)}{\partial%20z_{j}{L}}%20=%20\frac{\partial%20a_{j}^{L}}{\partial%20z_{j}^{L}}%20\frac{\partial%20C(w,b)}{\partial%20a_{j}^{L}}%20=%20(y%20-%20a_{j}^{L})%20*%20\sigma%27(z_{j}^{L})">
+
+This was only for one change of z<sub>j</sub><sup>L</sup> in the last layer of the network. Generally speaking, we can write:
+
+<img src="https://render.githubusercontent.com/render/math?math=\delta^{L} = \nabla_{a}%20C%20\cdot%20\sigma%27(z^L)">
+
+where
+
+- the first term is partial derivatives of loss/cost function with respect to z<sub>j</sub><sup>L</sup> for every z in the last layer of neurons.
+- the operator denotes element-wise product between vectors
+- the second term is the first derivative of squishification function at z<sub>j</sub><sup>L</sup>
+
+**Step 2**: Now, let's see what happens in the second to last layer of the network (denoted as L-1) and see how much is cost function sensitive to the change in the value of z<sub>j</sub><sup>L-1</sup> (j<sup>th</sup> neuron in the last layer L-1):
+
+<img src="https://render.githubusercontent.com/render/math?math=\delta_{j}^{L-1}%20=%20\frac{\partial%20C(w,b)}{\partial%20z_{j}{L-1}}">
+
+It's similar to the step above. However, in this case, change in z propagates to all neurons in the last layer so we need to take that into an account:
+
+<img src="https://render.githubusercontent.com/render/math?math=\delta_{j}^{L-1}%20=%20\frac{\partial%20C(w,b)}{\partial%20z_{j}{L-1}}=\frac{\partial%20a_j^{L-1}}{\partial%20z_{j}{L-1}}=\sum_k{\frac{\partial%20\delta%20z_k^L}{\partial%20a_{j}^{L-1}}%20\frac{\partial%20a_k^L}{\partial%20z_{k}{L}}%20\frac{\partial%20C(w,b)}{\partial%20a_{k}{L}}}">
+
+It turns out that we can write this in a more compact form for all changes in the second to the last layer (and this generalizes to any two layers):
+
+<img src="https://render.githubusercontent.com/render/math?math=\delta^{l-1}%20=%20(w^L)^T\delta^{l}%20\cdot%20\sigma%27(z^{l-1})">
+
+**Step 3**: Finally, to connect partial derivatives to weights and biases we use:
+
+<img src="https://render.githubusercontent.com/render/math?math=\frac{\partial%20C}{\b_j^l}%20%20=%20\delta_{j}^{l}">
+
+<img src="https://render.githubusercontent.com/render/math?math=\frac{\partial%20C}{\w_{j,k}^{l}}%20%20=%20\delta_{j}^{l}a_{k}^{l-1}">
+
+**ALGORITHM STEPS**:
+
+**Step 1**:  Set the corresponding activations in the first layer - a<sub>1</sub> (input layer).
+
+**Step 2**: Feedforward the input (explained above)
+
+**Step 3**: apply step 1 from the backpropagation reasoning calculating the delta for the last layer
+
+<img src="https://render.githubusercontent.com/render/math?math=\delta^{L} = \nabla_{a}%20C%20\cdot%20\sigma%27(z^L)">
+
+**Step 4**: backpropagate previous calculation using step 2 from the backpropagation reasoning
+
+<img src="https://render.githubusercontent.com/render/math?math=\delta^{l-1}%20=%20(w^L)^T\delta^{l}%20\cdot%20\sigma%27(z^{l-1})">
+
+**Step 5**: calculate gradients using
+
+<img src="https://render.githubusercontent.com/render/math?math=\frac{\partial%20C}{\b_j^l}%20%20=%20\delta_{j}^{l}">
+
+<img src="https://render.githubusercontent.com/render/math?math=\frac{\partial%20C}{\w_{j,k}^{l}}%20%20=%20\delta_{j}^{l}a_{k}^{l-1}">
+
+The backpropagation algorithm computes the gradient of the cost function for a single training example. We need to compute gradients to all training examples and finally average gradient across all of them. That is what we will report as a result.
+
